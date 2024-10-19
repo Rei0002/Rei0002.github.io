@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moku - プレイしたゲーム</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/destyle.css@1.0.15/destyle.css" />
+    <link rel="stylesheet" href="./played_games.css">
+</head>
+
+<body>
+    <div id="header">
+        <div id="title">プレイしたゲーム</div>
+        <a id="back" href="./index.html">ホームに戻る</a>
+    </div>
+    <div id="section">
+        <div class="toc">
+            <input type="text" id="searchInput" placeholder="目次を検索..." onkeyup="filterTable()">
+            <ul id="tocList">
+            </ul>
+        </div>
+    </div>
+
+    <div class="content" id="content">
+    </div>
+
+    <div id="credit">site dev: <a href="https://github.com/nnnnnnn0090">@nnnnnnn0090</a></div>
+
+    <script>
+        const tocList = document.getElementById('tocList');
+        const contentDiv = document.getElementById('content');
+
+        function toHiragana(str) {
+            return str.replace(/[\u30A1-\u30F6]/g, function (char) {
+                return String.fromCharCode(char.charCodeAt(0) - 0x60);
+            });
+        }
+
+        fetch('./categories.json')
+            .then(response => response.json())
+            .then(categories => {
+                categories.forEach((category) => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = `#${category.label}`;
+                    a.textContent = category.label;
+                    li.appendChild(a);
+
+                    const categoryDiv = document.createElement('div');
+                    contentDiv.appendChild(categoryDiv);
+
+                    const contentSection = document.createElement('h2');
+                    contentSection.id = category.label;
+                    contentSection.textContent = category.label;
+                    categoryDiv.appendChild(contentSection);
+
+                    const subUl = document.createElement('ul');
+                    const subCategories = {};
+
+                    category.games.forEach((game) => {
+                        const firstChar = toHiragana(game.title.charAt(0));
+                        if (!subCategories[firstChar]) {
+                            subCategories[firstChar] = {
+                                subLabel: firstChar,
+                                games: []
+                            };
+                        }
+                        subCategories[firstChar].games.push(game);
+                    });
+
+                    Object.values(subCategories).forEach((subCategory) => {
+                        const subLi = document.createElement('li');
+                        const subA = document.createElement('a');
+                        subA.href = `#${subCategory.subLabel}`;
+                        subA.textContent = subCategory.subLabel;
+                        subLi.appendChild(subA);
+
+                        const gameUl = document.createElement('ul');
+                        const subContentSection = document.createElement('h3');
+                        subContentSection.id = subCategory.subLabel;
+                        subContentSection.textContent = subCategory.subLabel;
+                        categoryDiv.appendChild(subContentSection);
+
+                        subCategory.games.forEach((game) => {
+                            const gameDiv = document.createElement('div');
+                            gameDiv.classList.add('game-item');
+
+                            const gameLi = document.createElement('li');
+                            const gameA = document.createElement('a');
+                            gameA.href = `#${game.title}`;
+                            gameA.textContent = game.title;
+                            gameLi.appendChild(gameA);
+                            gameUl.appendChild(gameLi);
+
+                            const gameContentSection = document.createElement('h4');
+                            gameContentSection.id = game.title;
+                            gameContentSection.textContent = game.title;
+                            gameDiv.appendChild(gameContentSection);
+
+                            const gameParagraph = document.createElement('p');
+                            gameParagraph.textContent = game.content;
+                            gameDiv.appendChild(gameParagraph);
+
+                            categoryDiv.appendChild(gameDiv);
+                        });
+
+                        subLi.appendChild(gameUl);
+                        subUl.appendChild(subLi);
+                    });
+
+                    li.appendChild(subUl);
+                    tocList.appendChild(li);
+                });
+
+                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                    anchor.addEventListener('click', function (e) {
+                        e.preventDefault();
+
+                        const targetId = this.getAttribute('href');
+                        const targetElement = document.querySelector(targetId);
+
+                        const headerOffset = document.getElementById('header').offsetHeight;
+                        const elementPosition = targetElement.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: 'smooth'
+                        });
+                    });
+                });
+            })
+            .catch(error => console.error('Error fetching categories:', error));
+
+        function filterTable() {
+            const input = document.getElementById('searchInput');
+            const filter = toHiragana(input.value.toLowerCase());
+            const listItems = tocList.getElementsByTagName('li');
+
+            for (let i = 0; i < listItems.length; i++) {
+                listItems[i].style.display = "none";
+            }
+
+            for (let i = 0; i < listItems.length; i++) {
+                const a = listItems[i].getElementsByTagName("a")[0];
+                if (a) {
+                    const txtValue = toHiragana(a.textContent || a.innerText);
+                    if (txtValue.indexOf(filter) > -1) {
+                        listItems[i].style.display = "";
+                    } else {
+                        const subItems = listItems[i].getElementsByTagName('ul')[0];
+                        if (subItems) {
+                            let subItemVisible = false;
+                            for (let j = 0; j < subItems.children.length; j++) {
+                                const subA = subItems.children[j].getElementsByTagName("a")[0];
+                                const subTxtValue = toHiragana(subA.textContent || subA.innerText);
+
+                                if (subTxtValue.indexOf(filter) > -1) {
+                                    subItemVisible = true;
+                                    break;
+                                }
+
+                                const gameUl = subItems.children[j].getElementsByTagName('ul')[0];
+                                if (gameUl) {
+                                    for (let k = 0; k < gameUl.children.length; k++) {
+                                        const gameA = gameUl.children[k].getElementsByTagName("a")[0];
+                                        const gameTxtValue = toHiragana(gameA.textContent || gameA.innerText);
+                                        if (gameTxtValue.indexOf(filter) > -1) {
+                                            subItemVisible = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if (subItemVisible) {
+                                listItems[i].style.display = "";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
