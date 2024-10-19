@@ -3,6 +3,9 @@
         "label": "あ行",
         "games": [
             { "title": "あつまれどうぶつの森", "content": "ゲーム名1の内容" },
+             { "title": "き", "content": "きの内容..." },
+            { "title": "く", "content": "くの内容..." },
+            { "title": "け", "content": "けの内容..." }
         ]
     },
     {
