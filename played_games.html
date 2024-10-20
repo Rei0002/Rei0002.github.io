@@ -99,7 +99,7 @@
                             gameDiv.appendChild(gameContentSection);
 
                             const gameParagraph = document.createElement('p');
-                            gameParagraph.textContent = game.content;
+                            gameParagraph.innerHTML = game.content;
                             gameDiv.appendChild(gameParagraph);
 
                             categoryDiv.appendChild(gameDiv);
